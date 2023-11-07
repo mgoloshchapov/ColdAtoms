@@ -1,3 +1,6 @@
+using PyPlot
+using SplitApplyCombine
+
 #Beam waist radius
 function w(z, w0, z0)
     return w0 .* sqrt.(1.0 .+ (z ./z0) .^2)
@@ -40,4 +43,42 @@ function trap_frequencies(atom_params, trap_params)
     ω = vconst/w0 * sqrt(U0/m);
     
     return 2*ω, sqrt(2)*ω
+end;
+
+
+
+#Function for visualisation of samples
+function samples_visualise(samples)
+    x, y, z, vx, vy, vz = invert(samples);
+    figure(figsize=(6,6))
+    subplot(221)
+    hist2D(x, z, bins=50, range=[[-1.0, 1.0], [-2.5, 2.5]],cmap="plasma", rasterized=true);
+    xlabel("x, μm")
+    ylabel("z, μm")
+    title("Coordinate distribution");
+
+    subplot(222)
+    hist(x, bins=[-1.5:0.02:1.5;], density=true, alpha=0.5, label="x")
+    hist(z, bins=[-2.0:0.1:2.0;], density=true, alpha=0.5, label="z")
+    xlabel("μm")
+    ylabel("pdf")
+    title("Coordinate distribution");
+    legend()
+
+    subplot(223)
+    hist2D(vx, vz, bins=50, range=[[-0.3, 0.3], [-0.3, 0.3]],cmap="plasma", rasterized=true);
+    xlabel("\$ v_x \$, \$ \\mu m/ \\mu s \$")
+    ylabel("\$ v_z \$, \$ \\mu m/ \\mu s \$")
+    title("Velocity distribution");
+
+
+    subplot(224)
+    hist(vx, bins=[-0.3:0.01:0.3;], density=true, alpha=0.5, label="\$ v_x \$")
+    hist(vz, bins=[-0.3:0.01:0.3;], density=true, alpha=0.5, label="\$ v_z \$")
+    xlabel("\$ \\mu m/ \\mu s \$")
+    ylabel("pdf")
+    title("Velocity distribution");
+    legend()
+
+    tight_layout()
 end;
