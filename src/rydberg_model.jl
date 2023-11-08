@@ -1,5 +1,7 @@
 include("utilities.jl")
 using QuantumOptics
+using ProgressMeter
+using BenchmarkTools
 
 
 #Basis states
