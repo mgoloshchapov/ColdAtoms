@@ -24,8 +24,9 @@ r0 = 1e-6;            #Characteristic distance in m
 #------------------------------------
 
 
-#Functions
-#------------------------------------
+"""
+Functions
+"""
 #Potential energy in gaussian beam
 function Π(cord, trap_params)
     U0, w0, z0 = trap_params;
@@ -71,10 +72,14 @@ function prob_boltzmann(cord, trap_params, atom_params; harmonic=false)
 end;
 
 
-
-#N - number of samples
-#freq - samples[1:freq:end] are taken to reduce correlation between samples
-#skip - number of skipped samples at start
+"""
+trap_params: [U0(μK), w0(μm), z0(μm)]
+atom_params: [m(a.u.), T(μK)]
+N:            number of samples
+freq:         make step equal to freq between samples to reduce correlation between them in MCMC
+skip:         skip first samples, so Markov Chain can converge to desired distribution
+harmonic:     make harmonic approximation, false by default
+"""
 function boltzmann_samples(trap_params, atom_params, N; freq=10, skip=1000, harmonic=false)
     U0, w0, z0 = trap_params;
     m, T = atom_params;
@@ -106,7 +111,11 @@ function boltzmann_samples(trap_params, atom_params, N; freq=10, skip=1000, harm
 end;
 
 
-#ωr, ωz trap frequencies
+
+"""
+atom_params: [m(a.u.), T(μK)]
+trap_params: [U0(μK), w0(μm), z0(μm)]
+"""
 function trap_frequencies(atom_params, trap_params)
     m, T = atom_params;
     U0, w0, z0 = trap_params;
