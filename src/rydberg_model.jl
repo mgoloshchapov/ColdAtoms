@@ -236,7 +236,6 @@ end;
 
 
 
-using Distributed
 function simulation_parallel(
     tspan, ψ0, 
         
@@ -283,7 +282,7 @@ function simulation_parallel(
     #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
-    Threads.@threads for i ∈ 1:N
+    @threads for i ∈ 1:N
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
