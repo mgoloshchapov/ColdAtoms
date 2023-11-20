@@ -1,13 +1,13 @@
 m = 86.9091835;       #Rb87 mass in a.u.
 
 #Saffman params for laser phase noise
-h0 = 13.0 * 1e-6;   #MHz^2/MHz
-hg1 = 25.0 * 1e-6;  #MHz^2/MHz
+h0 = 13.0 * 1e-6;    #MHz^2/MHz
+hg1 = 25.0 * 1e-6;   #MHz^2/MHz
 hg2 = 10.0e3 * 1e-6; #MHz^2/MHz
-fg1 = 130.0 * 1e-3; #MHz
-fg2 = 234.0 * 1e-3; #MHz
-σg1 = 18.0 * 1e-3;  #MHz
-σg2 = 1.5 * 1e-3;   #MHz
+fg1 = 130.0 * 1e-3;  #MHz
+fg2 = 234.0 * 1e-3;  #MHz
+σg1 = 18.0 * 1e-3;   #MHz
+σg2 = 1.5 * 1e-3;    #MHz
 
 red_laser_phase_params  = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
 blue_laser_phase_params = [h0, [hg1, hg2], [σg1, σg2], [fg1, fg2]];
@@ -29,7 +29,7 @@ zb = w0_to_z0(wr, λb);
 U0 = 1000.0;
 w0 = 1.1;
 λ0 = 0.852;
-z0 = w0_to_z0(w0, λ0)
+z0 = w0_to_z0(w0, λ0);
 kT = 50.0;
 
 atom_params = [m, kT];

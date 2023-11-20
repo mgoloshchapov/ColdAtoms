@@ -1,13 +1,13 @@
 #Beam waist radius
 function w(z, w0, z0)
-    return w0 .* sqrt.(1.0 .+ (z ./z0) .^2)
+    return w0 .* sqrt.(1.0 .+ (z ./z0) .^2);
 end;
 
 
 
 #Converter
 function w0_to_z0(w0, λ)
-    return π*w0^2/λ
+    return π*w0^2/λ;
 end;
 
 
