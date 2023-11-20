@@ -40,4 +40,4 @@ tspan = [0.0:T0/20:2.5*T0;];
         decay_params
     );
 
-print(real(expect(r ⊗ dagger(r), ρ_mean[end])))
+print(real(expect(r ⊗ dagger(r), ρ_mean_parallel[end])))
