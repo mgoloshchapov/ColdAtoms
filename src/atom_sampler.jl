@@ -1,26 +1,23 @@
-using Statistics
-using Distributions
-using Random
-
+using Statistics, Distributions, Random
 using PhysicalConstants.CODATA2018: c_0, k_B, m_u
 using Unitful
-
-using PyPlot
 using LinearAlgebra
 using SplitApplyCombine
+
+include("utilities.jl")
 
 
 #Constants and scales
 #------------------------------------
-c = ustrip(u"m/s", c_0);  #Speed of light
-kB = ustrip(u"J/K", k_B)  #Boltzmann constant
-mu = ustrip(u"kg", m_u);  #Unit of atomic mass
+const c = ustrip(u"m/s", c_0);  #Speed of light
+const kB = ustrip(u"J/K", k_B)  #Boltzmann constant
+const mu = ustrip(u"kg", m_u);  #Unit of atomic mass
 
-m = 86.9091835;       #Rb87 mass in a.u.
-E0 = kB * 1e-6;       #Characteristic energy in μK
-g0 = 9.81 * 1e-6;     #Gravity free fall acceleration
-vconst = sqrt(E0/mu); #Useful constant for kinetic energy
-r0 = 1e-6;            #Characteristic distance in m
+const m = 86.9091835;       #Rb87 mass in a.u.
+const E0 = kB * 1e-6;       #Characteristic energy in μK
+const g0 = 9.81 * 1e-6;     #Gravity free fall acceleration
+const vconst = sqrt(E0/mu); #Useful constant for kinetic energy
+const r0 = 1e-6;            #Characteristic distance in m
 #------------------------------------
 
 
@@ -80,7 +77,7 @@ freq:         make step equal to freq between samples to reduce correlation betw
 skip:         skip first samples, so Markov Chain can converge to desired distribution
 harmonic:     make harmonic approximation, false by default
 """
-function boltzmann_samples(trap_params, atom_params, N; freq=10, skip=1000, harmonic=false)
+function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=false)
     U0, w0, z0 = trap_params;
     m, T = atom_params;
 
@@ -137,5 +134,3 @@ end;
 function V(t, ri, vi, ω)
     return vi * cos.(ω .* t) - ri * ω * sin.(ω .* t);
 end;       
-
-
