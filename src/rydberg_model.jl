@@ -132,6 +132,7 @@ function simulation(
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
     ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
+    ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     #Second moment for error estimation of level populations. 
     #Not sure if I can use it for error estimation of arbitrary operators.
@@ -204,10 +205,10 @@ function simulation(
         end;
         
 
-        tout, ρ = timeevolution.master_dynamic(tspan, ρ0, super_operator);
+        tout, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
 
-        ρ_mean = ρ_mean + ρ;
-        ρ2_mean = ρ2_mean + ρ .^ 2;
+        ρ_mean = ρ_mean + ρ_temp;
+        ρ2_mean = ρ2_mean + ρ_temp .^ 2;
     end;
 
     return ρ_mean/N, ρ2_mean/N
@@ -277,13 +278,12 @@ function simulation_parallel(
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
     ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-    ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     #Second moment for error estimation of level populations. 
     #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
-    @distributed for i ∈ 1:N
+    Threads.@threads for i ∈ 1:N
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
@@ -350,10 +350,10 @@ function simulation_parallel(
         end;
         
 
-        tout, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
+        tout, ρ = timeevolution.master_dynamic(tspan, ρ0, super_operator);
 
-        ρ_mean = ρ_mean + ρ_temp;
-        ρ2_mean = ρ2_mean + ρ_temp .^ 2;
+        ρ_mean = ρ_mean + ρ;
+        ρ2_mean = ρ2_mean + ρ .^ 2;
     end;
 
     return ρ_mean/N, ρ2_mean/N
