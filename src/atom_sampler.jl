@@ -1,19 +1,9 @@
-using Statistics, Distributions, Random
-using PhysicalConstants.CODATA2018: c_0, k_B, m_u
-using Unitful
-using LinearAlgebra
-using SplitApplyCombine
-
-include("utilities.jl")
-
-
 #Constants and scales
 #------------------------------------
 const c = ustrip(u"m/s", c_0);  #Speed of light
 const kB = ustrip(u"J/K", k_B)  #Boltzmann constant
 const mu = ustrip(u"kg", m_u);  #Unit of atomic mass
 
-const m = 86.9091835;       #Rb87 mass in a.u.
 const E0 = kB * 1e-6;       #Characteristic energy in μK
 const g0 = 9.81 * 1e-6;     #Gravity free fall acceleration
 const vconst = sqrt(E0/mu); #Useful constant for kinetic energy
@@ -108,26 +98,10 @@ function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmo
 end;
 
 
-
-"""
-atom_params: [m(a.u.), T(μK)]
-trap_params: [U0(μK), w0(μm), z0(μm)]
-"""
-function trap_frequencies(atom_params, trap_params)
-    m, T = atom_params;
-    U0, w0, z0 = trap_params;
-    ω = vconst/w0 * sqrt(U0/m);
-    
-    return 2*ω, sqrt(2)*ω
-end;
-
-
-
 #Generate coordinate trajectory from Monte-Carlo initial conditions
 function R(t, ri, vi, ω)
     return ri * cos.(ω .* t) + vi/ω * sin.(ω .* t);
 end;    
-
 
 
 #Generate velocity trajectory from Monte-Carlo initial conditions

@@ -1,6 +1,3 @@
-using PyPlot
-using SplitApplyCombine
-
 #Beam waist radius
 function w(z, w0, z0)
     return w0 .* sqrt.(1.0 .+ (z ./z0) .^2)
@@ -36,7 +33,10 @@ function E(x, y, z, w0, z0)
 end;
 
 
-#ωr, ωz trap frequencies
+"""
+atom_params: [m(a.u.), T(μK)]
+trap_params: [U0(μK), w0(μm), z0(μm)]
+"""
 function trap_frequencies(atom_params, trap_params)
     m, T = atom_params;
     U0, w0, z0 = trap_params;
@@ -44,7 +44,6 @@ function trap_frequencies(atom_params, trap_params)
     
     return 2*ω, sqrt(2)*ω
 end;
-
 
 
 #Function for visualisation of samples
