@@ -19,7 +19,7 @@ T0 = T_twophoton(Ωr, Ωb, Δ0);
 tspan = [0.0:T0/20:2.5*T0;];
 ψ0 = g;
 
-@time ColdAtoms.simulation_parallel(
+@time simulation(
     tspan, ψ0, 
     
     atom_params,
@@ -38,7 +38,7 @@ tspan = [0.0:T0/20:2.5*T0;];
     );
 
 
-@time ColdAtoms.simulation_parallel(
+@time simulation(
     tspan, ψ0, 
     
     atom_params,

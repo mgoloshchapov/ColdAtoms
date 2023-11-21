@@ -113,6 +113,25 @@ function simulation(
     spontaneous_decay=true,
     parallel=false
     )
+    #Basis states
+    basis = NLevelBasis(4);
+    g = nlevelstate(basis, 1);
+    p = nlevelstate(basis, 2);
+    r = nlevelstate(basis, 3);
+    gt = nlevelstate(basis, 4);
+
+    #Operators
+    σgp = g ⊗ dagger(p);
+    σpg = p ⊗ dagger(g);
+
+    σpr = p ⊗ dagger(r);
+    σrp = r ⊗ dagger(p);
+
+    np = p ⊗ dagger(p);
+    nr = r ⊗ dagger(r);
+
+    σgtp = gt ⊗ dagger(p);
+    σpgt = p ⊗ dagger(gt);
 
     N = length(samples);
 
@@ -125,10 +144,10 @@ function simulation(
         decay_params_temp = [0.0, 0.0];
     end;
 
-    J, Jdagger = JumpOperators(decay_params_temp);
+    Γg, Γgt = decay_params_temp;
+    J, Jdagger = [sqrt(Γg)*σgp, sqrt(Γgt)*σgtp], [sqrt(Γg)*σpg, sqrt(Γgt)*σpgt];
 
     ρ0 = ψ0 ⊗ dagger(ψ0);
-
 
     #Density matrix averaged over realizations of laser noise and atom dynamics.
     ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
@@ -138,7 +157,12 @@ function simulation(
     #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
+    tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
+    
     for i ∈ 1:N
+        """
+        Each time I copy samples -> Allocations. 100 * 6 * 64 = 600 * 64 ~ 36000 B ~ 36 kB
+        """
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
@@ -147,11 +171,10 @@ function simulation(
         end;
         
         #Atom trajectories
-        X(t) = R(t, xi, vxi, ωr);
-        Y(t) = R(t, yi, vyi, ωr);
-        Z(t) = R(t, zi, vzi, ωz);
-        Vz(t) = V(t, zi, vzi, ωz);
-
+        X = t -> R(t, xi, vxi, ωr);
+        Y = t -> R(t, yi, vyi, ωr);
+        Z = t -> R(t, zi, vzi, ωz);
+        Vz = t -> V(t, zi, vzi, ωz);
         
         if laser_noise
             red_laser_phase_amplitudes_temp = red_laser_phase_amplitudes;
@@ -161,8 +184,10 @@ function simulation(
             blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
         end;
 
+        """
+        Can I preallocate functions + Shall I use f(t) or just f? 
+        """
         #Generate phase noise traces for red and blue lasers
-        tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
         ϕ_red_res = ϕ(tspan_noise, f, red_laser_phase_amplitudes_temp);
         ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes_temp);
 
@@ -171,15 +196,17 @@ function simulation(
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
 
-        
         #Hamiltonian params trajectories
-        δ_temp(t) = δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) + δ0;
-        Δ_temp(t) = Δ(Vz(t), red_laser_params) + Δ0;
-        Ωr_temp(t) = exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
-        Ωb_temp(t) = exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
+        δ_temp = t -> δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) + δ0;
+        Δ_temp = t -> Δ(Vz(t), red_laser_params) + Δ0;
+        Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
+        Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
         
-        #Hamiltonian
-        H_temp = TimeDependentSum(
+        """
+        Each time I create new hamiltonian. Instead I can create new array of coefficients. 
+        """
+        # Hamiltonian
+        Ht = TimeDependentSum(
         [
             t -> -Δ_temp(t),
             t -> -δ_temp(t),
@@ -198,13 +225,15 @@ function simulation(
             σrp  
         ]
         );
-        
-        #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
+
+        """
+        Can I remove super_oprator from here?
+        """
+        # #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
         function super_operator(t, rho)
-            return H_temp, J, Jdagger;
+            return Ht, J, Jdagger;
         end;
         
-
         tout, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
 
         ρ_mean = ρ_mean + ρ_temp;
@@ -282,7 +311,7 @@ function simulation_parallel(
     #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
-    @threads for i ∈ 1:N
+    Threads.@threads for i ∈ 1:N
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
