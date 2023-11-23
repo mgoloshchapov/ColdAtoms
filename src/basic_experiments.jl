@@ -4,6 +4,53 @@ atom_params: [m(a.u.), T(μK)], T is used as initial guess for temperature
 tspan      : time from experiment(in μs)
 probability: probability to recapture atom from experiment
 """
-function release_recapture(trap_params, atom_params, tspan, probability)
-    #...
+
+function is_zero(x)
+    return x == 0
 end;
+
+
+function release_evolve(tspan, cord, atom_params, trap_params)
+    xi, yi, zi, vxi, vyi, vzi = cord;
+    m, T = atom_params;
+    U0, w0, z0 = trap_params;
+    
+    x = xi .+ vxi * tspan;
+    y = yi .+ vyi * tspan - g0 * tspan .^2;
+    z = zi .+ vzi * tspan;
+    
+    kinetic = K(cord, trap_params, m);
+    potential = U0 .* (1.0 .- A(x, y, z, w0, z0) .^2);
+    recap = (kinetic .+ potential) .< U0;
+    
+    idx = findfirst(is_zero, recap);
+    
+    if idx != nothing
+        recap[idx:end] .= 0;
+    end;
+    
+    return recap
+end; 
+
+
+function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000)
+    samples, acc_rate = samples_generate(trap_params, atom_params, N; freq=freq, skip=skip);
+    recapture = zeros(length(tspan));
+    
+    for i ∈ 1:N
+        recapture += release_evolve(tspan, samples[i], atom_params, trap_params);
+    end;
+    
+    return recapture ./ N, acc_rate
+end;
+# function release_recapture_antitrapping(tspan, trap_params, atom_params, α, N; freq=10, skip=1000)
+#     samples, acc_rate = boltzmann_samples(trap_params, atom_params, N; freq=freq, skip=skip);
+    
+#     recapture = zeros(length(tspan));
+    
+#     for i ∈ 1:N
+#         recapture += evolve(tspan, samples[i], atom_params, trap_params);
+#     end;
+    
+#     return recapture ./ N, acc_rate
+# end;

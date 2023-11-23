@@ -108,3 +108,18 @@ end;
 function V(t, ri, vi, ω)
     return vi * cos.(ω .* t) - ri * ω * sin.(ω .* t);
 end;       
+
+
+function get_trap_params(ωr, ωz, U0, λ; m = 87.0, dif=true)
+    if dif
+        Δω = ωr - ωz;
+        w0 = λ/(1.0 - Δω/ωr) /(sqrt(2.0) * π);
+        z0 = π*w0^2 / λ;
+        Utemp = m * (ωr / (2.0 * vconst))^2;
+    else
+        w0 = vconst * sqrt(4.0 * U0 / m) / ωr ;
+        z0 = vconst * sqrt(2.0 * U0 / m) / ωz ;
+        Utemp = U0;
+    end;
+    return w0, z0, Utemp
+end;

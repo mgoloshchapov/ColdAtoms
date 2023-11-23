@@ -21,12 +21,12 @@ blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
 λr = 0.795;
 λb = 0.475;
 
-wr = 5.0;
-wb = 5.0;
+wr = 10.0;
+wb = 3.0;
 zr = w0_to_z0(wr, λr);
 zb = w0_to_z0(wr, λb);
 
-U0 = 1000.0;
+U0 = 1440.0;
 w0 = 1.1;
 λ0 = 0.852;
 z0 = w0_to_z0(w0, λ0);
@@ -38,7 +38,7 @@ trap_params = [U0, w0, z0];
 
 #Rabi frequencies
 Δ0 = 2.0*π * 740.0;
-Ωb = 2π * 35.0;
+Ωb = 2π * 60.0;
 blue_laser_params = [Ωb, wb, zb];
 Γ = 2.0*π * 6.0;
 decay_params = [Γ/4, 3*Γ/4];

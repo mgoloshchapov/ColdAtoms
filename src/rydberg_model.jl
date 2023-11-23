@@ -8,15 +8,14 @@ const gt = nlevelstate(basis, 4);
 #Operators
 const σgp = g ⊗ dagger(p);
 const σpg = p ⊗ dagger(g);
-
 const σpr = p ⊗ dagger(r);
 const σrp = r ⊗ dagger(p);
-
 const np = p ⊗ dagger(p);
 const nr = r ⊗ dagger(r);
-
 const σgtp = gt ⊗ dagger(p);
 const σpgt = p ⊗ dagger(gt);
+
+const operators = [np, nr, σgp, σpg, σpr, σrp];
 
 
 #Due to atom dynamics
@@ -40,7 +39,7 @@ end;
 
 
 #Due to Doppler shifts for red and blue lasers
-function δ(vz, red_laser_params, blue_laser_params; parallel=true)
+function δ(vz, red_laser_params, blue_laser_params; parallel=false)
     Ωr0, wr0, zr0 = red_laser_params;
     Ωb0, wb0, zb0 = blue_laser_params;
     
@@ -113,26 +112,6 @@ function simulation(
     spontaneous_decay=true,
     parallel=false
     )
-    #Basis states
-    basis = NLevelBasis(4);
-    g = nlevelstate(basis, 1);
-    p = nlevelstate(basis, 2);
-    r = nlevelstate(basis, 3);
-    gt = nlevelstate(basis, 4);
-
-    #Operators
-    σgp = g ⊗ dagger(p);
-    σpg = p ⊗ dagger(g);
-
-    σpr = p ⊗ dagger(r);
-    σrp = r ⊗ dagger(p);
-
-    np = p ⊗ dagger(p);
-    nr = r ⊗ dagger(r);
-
-    σgtp = gt ⊗ dagger(p);
-    σpgt = p ⊗ dagger(gt);
-
     N = length(samples);
 
     ωr, ωz = trap_frequencies(atom_params, trap_params);
@@ -158,6 +137,37 @@ function simulation(
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
+    nodes = (tspan_noise, );
+
+    if laser_noise
+        red_laser_phase_amplitudes_temp = red_laser_phase_amplitudes;
+        blue_laser_phase_amplitudes_temp = blue_laser_phase_amplitudes;
+    else
+        red_laser_phase_amplitudes_temp = zero(red_laser_phase_amplitudes);
+        blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
+    end;
+
+    # #Hamiltonian
+    # Δ_temp = t -> 0.0;
+    # δ_temp = t -> 0.0;
+    # Ωr_temp = t -> 0.0;
+    # Ωr_conj_temp = t -> 0.0;
+    # Ωb_temp = t -> 0.0;
+    # Ωb_conj_temp = t -> 0.0;
+
+    # # Hamiltonian
+    # Ht = TimeDependentSum(
+    #     [
+    #         Δ_temp,
+    #         δ_temp,
+    #         Ωr_temp,
+    #         Ωr_conj_temp,
+    #         Ωb_temp,
+    #         Ωb_conj_temp
+    #     ],
+    #     operators
+    #     );
+        
     
     for i ∈ 1:N
         """
@@ -176,14 +186,6 @@ function simulation(
         Z = t -> R(t, zi, vzi, ωz);
         Vz = t -> V(t, zi, vzi, ωz);
         
-        if laser_noise
-            red_laser_phase_amplitudes_temp = red_laser_phase_amplitudes;
-            blue_laser_phase_amplitudes_temp = blue_laser_phase_amplitudes;
-        else
-            red_laser_phase_amplitudes_temp = zero(red_laser_phase_amplitudes);
-            blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
-        end;
-
         """
         Can I preallocate functions + Shall I use f(t) or just f? 
         """
@@ -192,39 +194,56 @@ function simulation(
         ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes_temp);
 
         #Interpolate phase noise traces to pass to hamiltonian
-        nodes = (tspan_noise, );
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
 
+        # #Hamiltonian params trajectories
+        # Ht = TimeDependentSum(
+        # [
+        #     Δ_temp,
+        #     δ_temp,
+        #     Ωr_temp,
+        #     Ωr_conj_temp,
+        #     Ωb_temp,
+        #     Ωb_conj_temp
+        # ],
+        # operators
+        # );
+
         #Hamiltonian params trajectories
-        δ_temp = t -> δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) + δ0;
-        Δ_temp = t -> Δ(Vz(t), red_laser_params) + Δ0;
-        Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
-        Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
-        
-        """
-        Each time I create new hamiltonian. Instead I can create new array of coefficients. 
-        """
-        # Hamiltonian
         Ht = TimeDependentSum(
         [
-            t -> -Δ_temp(t),
-            t -> -δ_temp(t),
-            t -> Ωr_temp(t)/2.0,
-            t -> conj(Ωr_temp(t))/2.0,
-            t -> Ωb_temp(t)/2.0,
-            t -> conj(Ωb_temp(t))/2.0
+            t -> -Δ(Vz(t), red_laser_params) - Δ0;
+            t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
+            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
+            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
+            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
         ],
-        
-        [
-            np,
-            nr,
-            σgp,
-            σpg,
-            σpr,
-            σrp  
-        ]
+        operators
         );
+
+        # Δ_temp = t -> -Δ(Vz(t), red_laser_params) - Δ0;
+        # δ_temp = t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
+        # Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
+        # Ωr_conj_temp = t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
+        # Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+        # Ωb_conj_temp = t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
+        
+        """
+        Each time I create new hamiltonian. Instead I can create new array of factors. 
+        """
+        # Hamiltonian
+        # H.coefficients = 
+        # [
+        #     Δ_temp,
+        #     δ_temp,
+        #     Ωr_temp,
+        #     Ωr_conj_temp,
+        #     Ωb_temp,
+        #     Ωb_conj_temp
+        # ];
+        
 
         """
         Can I remove super_oprator from here?
@@ -234,7 +253,7 @@ function simulation(
             return Ht, J, Jdagger;
         end;
         
-        tout, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
+        _, ρ_temp = timeevolution.master_dynamic(tspan, ρ0, super_operator);
 
         ρ_mean = ρ_mean + ρ_temp;
         ρ2_mean = ρ2_mean + ρ_temp .^ 2;
@@ -311,7 +330,13 @@ function simulation_parallel(
     #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
-    Threads.@threads for i ∈ 1:N
+    #Hamiltonian
+    H = LazySum(
+        zeros(ComplexF64, 6),
+        [np, nr, σgp, σpg, σpr, σrp]
+        );
+
+    for i ∈ 1:N
         if atom_motion
             #Atom initial conditions
             xi, yi, zi, vxi, vyi, vzi = samples[i];
@@ -320,10 +345,10 @@ function simulation_parallel(
         end;
         
         #Atom trajectories
-        X(t) = R(t, xi, vxi, ωr);
-        Y(t) = R(t, yi, vyi, ωr);
-        Z(t) = R(t, zi, vzi, ωz);
-        Vz(t) = V(t, zi, vzi, ωz);
+        X = t -> R(t, xi, vxi, ωr);
+        Y = t -> R(t, yi, vyi, ωr);
+        Z = t -> R(t, zi, vzi, ωz);
+        Vz = t -> V(t, zi, vzi, ωz);
 
         
         if laser_noise
@@ -343,41 +368,26 @@ function simulation_parallel(
         nodes = (tspan_noise, );
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
-
         
         #Hamiltonian params trajectories
-        δ_temp(t) = δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) + δ0;
-        Δ_temp(t) = Δ(Vz(t), red_laser_params) + Δ0;
-        Ωr_temp(t) = exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params);
-        Ωb_temp(t) = exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params);
-        
-        #Hamiltonian
-        H_temp = TimeDependentSum(
-        [
-            t -> -Δ_temp(t),
-            t -> -δ_temp(t),
-            t -> Ωr_temp(t)/2.0,
-            t -> conj(Ωr_temp(t))/2.0,
-            t -> Ωb_temp(t)/2.0,
-            t -> conj(Ωb_temp(t))/2.0
-        ],
-        
-        [
-            np,
-            nr,
-            σgp,
-            σpg,
-            σpr,
-            σrp  
-        ]
-        );
-        
-        #Returns hamiltonian and jump operators in a form required by timeevolution.master_dynamic
-        function super_operator(t, rho)
-            return H_temp, J, Jdagger;
-        end;
+        # Δ_temp = t -> -Δ(Vz(t), red_laser_params) - Δ0;
+        # δ_temp = t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
+        # Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
+        # Ωr_conj_temp = t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
+        # Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+        # Ωb_conj_temp = t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
         
 
+        function super_operator(t, rho)
+            H.factors[1] = -Δ(Vz(t), red_laser_params) - Δ0;
+            H.factors[2] = -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
+            H.factors[3] = exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
+            H.factors[4] = conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
+            H.factors[5] = exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
+            H.factors[6] = conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0)
+            return H, J, Jdagger
+        end;
+    
         tout, ρ = timeevolution.master_dynamic(tspan, ρ0, super_operator);
 
         ρ_mean = ρ_mean + ρ;
