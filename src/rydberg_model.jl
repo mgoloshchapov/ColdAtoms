@@ -108,6 +108,7 @@ function simulation(
     decay_params;
 
     atom_motion=true,
+    free_motion=true,
     laser_noise=true,
     spontaneous_decay=true,
     parallel=false
@@ -133,7 +134,6 @@ function simulation(
     ρ_temp = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     #Second moment for error estimation of level populations. 
-    #Not sure if I can use it for error estimation of arbitrary operators.
     ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
 
     tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
@@ -147,27 +147,6 @@ function simulation(
         blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
     end;
 
-    # #Hamiltonian
-    # Δ_temp = t -> 0.0;
-    # δ_temp = t -> 0.0;
-    # Ωr_temp = t -> 0.0;
-    # Ωr_conj_temp = t -> 0.0;
-    # Ωb_temp = t -> 0.0;
-    # Ωb_conj_temp = t -> 0.0;
-
-    # # Hamiltonian
-    # Ht = TimeDependentSum(
-    #     [
-    #         Δ_temp,
-    #         δ_temp,
-    #         Ωr_temp,
-    #         Ωr_conj_temp,
-    #         Ωb_temp,
-    #         Ωb_conj_temp
-    #     ],
-    #     operators
-    #     );
-        
     
     for i ∈ 1:N
         """
@@ -181,10 +160,10 @@ function simulation(
         end;
         
         #Atom trajectories
-        X = t -> R(t, xi, vxi, ωr);
-        Y = t -> R(t, yi, vyi, ωr);
-        Z = t -> R(t, zi, vzi, ωz);
-        Vz = t -> V(t, zi, vzi, ωz);
+        X = t -> R(t, xi, vxi, ωr; free=free_motion);
+        Y = t -> R(t, yi, vyi, ωr; free=free_motion);
+        Z = t -> R(t, zi, vzi, ωz; free=free_motion);
+        Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
         
         """
         Can I preallocate functions + Shall I use f(t) or just f? 
@@ -196,19 +175,6 @@ function simulation(
         #Interpolate phase noise traces to pass to hamiltonian
         ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
         ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
-
-        # #Hamiltonian params trajectories
-        # Ht = TimeDependentSum(
-        # [
-        #     Δ_temp,
-        #     δ_temp,
-        #     Ωr_temp,
-        #     Ωr_conj_temp,
-        #     Ωb_temp,
-        #     Ωb_conj_temp
-        # ],
-        # operators
-        # );
 
         #Hamiltonian params trajectories
         Ht = TimeDependentSum(
@@ -222,28 +188,6 @@ function simulation(
         ],
         operators
         );
-
-        # Δ_temp = t -> -Δ(Vz(t), red_laser_params) - Δ0;
-        # δ_temp = t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
-        # Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
-        # Ωr_conj_temp = t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
-        # Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-        # Ωb_conj_temp = t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
-        
-        """
-        Each time I create new hamiltonian. Instead I can create new array of factors. 
-        """
-        # Hamiltonian
-        # H.coefficients = 
-        # [
-        #     Δ_temp,
-        #     δ_temp,
-        #     Ωr_temp,
-        #     Ωr_conj_temp,
-        #     Ωb_temp,
-        #     Ωb_conj_temp
-        # ];
-        
 
         """
         Can I remove super_oprator from here?
@@ -302,6 +246,7 @@ function simulation_parallel(
     decay_params;
 
     atom_motion=true,
+    free_motion=true,
     laser_noise=true,
     spontaneous_decay=true,
     parallel=false
@@ -345,10 +290,10 @@ function simulation_parallel(
         end;
         
         #Atom trajectories
-        X = t -> R(t, xi, vxi, ωr);
-        Y = t -> R(t, yi, vyi, ωr);
-        Z = t -> R(t, zi, vzi, ωz);
-        Vz = t -> V(t, zi, vzi, ωz);
+        X = t -> R(t, xi, vxi, ωr; free=free_motion);
+        Y = t -> R(t, yi, vyi, ωr; free=free_motion);
+        Z = t -> R(t, zi, vzi, ωz; free=free_motion);
+        Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
 
         
         if laser_noise

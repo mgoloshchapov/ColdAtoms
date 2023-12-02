@@ -1,0 +1,51 @@
+# Log started at 2023-10-24 15:27:14.
+# Total number of iterations = 21.
+# Number of averages = 400.
+# Scan range (start, stop, step) = (0, 1000, 50).
+# List of input parameters:
+#   IN0 - FPGA.time: unit 2, time-units ns.
+# List of actions:
+#   ACT0 - Calibration.Monitor lasers: calib iter 0, calib time (sec) 60, initial calib true, channel 7 true, channel 5 true, channel 8 true.
+#   ACT1 - Calibration.Stabilize raman: calib iter 0, calib time (sec) 360, initial calib true.
+#   ACT2 - Calibration.Stabilize lasers: calib iter 0, calib time (sec) 60, initial calib true.
+#   ACT3 - Sorting: max iter 10000, MOT disable false.
+#   ACT4 - Sequence.Clear.
+#   ACT5 - Sequence.Init devices.
+#   ACT6 - Gate.CzInit: control 0, target 1, init true, phase shift (Rad) 4.200000.
+#   ACT7 - Sequence.Bias field and trap ramp: Bias and ramp on true, Trap ramp disable false.
+#   ACT8 - Sequence.Pump array state.
+#   ACT9 - Sequence.Manual.
+#   ACT10 - Sequence.Bias field and trap ramp: Bias and ramp on false, Trap ramp disable false.
+#   ACT11 - Gate.CzInit: control 0, target 1, init false, phase shift (Rad) 4.200000.
+#   ACT12 - Sequence.Exec.
+#   ACT13 - Camera.Shot.
+# List of output parameters:
+#   OUT0 - Trap.Filled: trap 58.
+#   OUT1 - Trap.Filled: trap 59.
+#   OUT2 - Trap.FilledConditional: trap1 58, state1 true, trap2 59, state2 true.
+#   OUT3 - Trap.FilledConditional: trap1 58, state1 false, trap2 59, state2 true.
+#   OUT4 - Trap.FilledConditional: trap1 58, state1 true, trap2 59, state2 false.
+#   OUT5 - Trap.FilledConditional: trap1 58, state1 false, trap2 59, state2 false.
+#   OUT6 - Trap.Parity: trap1 58, trap2 59.
+#          X         OUT0   STDEV_OUT0         OUT1   STDEV_OUT1         OUT2   STDEV_OUT2         OUT3   STDEV_OUT3         OUT4   STDEV_OUT4         OUT5   STDEV_OUT5         OUT6   STDEV_OUT6          IN0 
+       0.000        0.935        0.019        0.000        0.000        0.000        0.000        0.000        0.000        0.935        0.019        0.065        0.019       -0.870        0.038       30.000 
+      50.000        0.882        0.025        0.006        0.006        0.000        0.000        0.006        0.006        0.882        0.025        0.112        0.024       -0.775        0.049       50.000 
+     100.000        0.734        0.034        0.000        0.000        0.000        0.000        0.000        0.000        0.734        0.034        0.266        0.034       -0.467        0.068      100.000 
+     150.000        0.426        0.038        0.000        0.000        0.000        0.000        0.000        0.000        0.426        0.038        0.574        0.038        0.148        0.076      150.000 
+     200.000        0.331        0.036        0.000        0.000        0.000        0.000        0.000        0.000        0.331        0.036        0.669        0.036        0.337        0.073      200.000 
+     250.000        0.249        0.033        0.000        0.000        0.000        0.000        0.000        0.000        0.249        0.033        0.751        0.033        0.503        0.067      250.000 
+     300.000        0.343        0.037        0.006        0.006        0.006        0.006        0.000        0.000        0.337        0.036        0.657        0.037        0.325        0.073      300.000 
+     350.000        0.432        0.038        0.006        0.006        0.006        0.006        0.000        0.000        0.426        0.038        0.568        0.038        0.148        0.076      350.000 
+     400.000        0.793        0.031        0.006        0.006        0.006        0.006        0.000        0.000        0.787        0.032        0.207        0.031       -0.574        0.063      400.000 
+     450.000        0.858        0.027        0.006        0.006        0.006        0.006        0.000        0.000        0.852        0.027        0.142        0.027       -0.704        0.055      450.000 
+     500.000        0.893        0.024        0.000        0.000        0.000        0.000        0.000        0.000        0.893        0.024        0.107        0.024       -0.787        0.048      500.000 
+     550.000        0.686        0.036        0.006        0.006        0.000        0.000        0.006        0.006        0.686        0.036        0.308        0.036       -0.385        0.071      550.000 
+     600.000        0.556        0.038        0.000        0.000        0.000        0.000        0.000        0.000        0.556        0.038        0.444        0.038       -0.112        0.077      600.000 
+     650.000        0.438        0.038        0.006        0.006        0.006        0.006        0.000        0.000        0.432        0.038        0.562        0.038        0.136        0.076      650.000 
+     700.000        0.379        0.037        0.006        0.006        0.006        0.006        0.000        0.000        0.373        0.037        0.621        0.037        0.254        0.075      700.000 
+     750.000        0.396        0.038        0.006        0.006        0.000        0.000        0.006        0.006        0.396        0.038        0.598        0.038        0.195        0.076      750.000 
+     800.000        0.595        0.038        0.000        0.000        0.000        0.000        0.000        0.000        0.595        0.038        0.405        0.038       -0.190        0.076      800.000 
+     850.000        0.702        0.035        0.000        0.000        0.000        0.000        0.000        0.000        0.702        0.035        0.298        0.035       -0.405        0.071      850.000 
+     900.000        0.750        0.034        0.000        0.000        0.000        0.000        0.000        0.000        0.750        0.034        0.250        0.034       -0.500        0.067      900.000 
+     950.000        0.810        0.030        0.006        0.006        0.006        0.006        0.000        0.000        0.804        0.031        0.190        0.030       -0.607        0.061      950.000 
+    1000.000        0.661        0.037        0.012        0.008        0.000        0.000        0.012        0.008        0.661        0.037        0.327        0.036       -0.345        0.073     1000.000 

@@ -22,22 +22,25 @@ blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
 λb = 0.475;
 
 wr = 10.0;
-wb = 3.0;
+wb = 3.5;
 zr = w0_to_z0(wr, λr);
 zb = w0_to_z0(wr, λb);
 
-U0 = 1440.0;
-w0 = 1.1;
+#Trap is adiabatically lowered to adiabatic_param * U0
+#Temperature scales as adiabatic_param sqrt(adiabatic_param) * T0  
+adiabatic_param = 0.4;
+U0 = 1435.0 * adiabatic_param;
+w0 = 1.07;
 λ0 = 0.852;
 z0 = w0_to_z0(w0, λ0);
-kT = 50.0;
+kT = 50.0 * sqrt(adiabatic_param);
 
 atom_params = [m, kT];
 trap_params = [U0, w0, z0];
 
 
 #Rabi frequencies
-Δ0 = 2.0*π * 740.0;
+Δ0 = 2.0*π * 904.0;
 Ωb = 2π * 60.0;
 blue_laser_params = [Ωb, wb, zb];
 Γ = 2.0*π * 6.0;

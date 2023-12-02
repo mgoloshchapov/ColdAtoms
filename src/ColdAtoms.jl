@@ -24,5 +24,6 @@ include("basic_experiments.jl")
 include("lasernoise_sampler.jl")
 include("atom_sampler.jl")
 include("rydberg_model.jl")
+include("plot_rus.jl")
 
 end

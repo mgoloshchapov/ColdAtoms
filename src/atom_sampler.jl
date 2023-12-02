@@ -99,14 +99,22 @@ end;
 
 
 #Generate coordinate trajectory from Monte-Carlo initial conditions
-function R(t, ri, vi, ω)
-    return ri * cos.(ω .* t) + vi/ω * sin.(ω .* t);
+function R(t, ri, vi, ω; free=false)
+    if free
+        return ri + vi * t;
+    else
+        return ri * cos(ω * t) + vi/ω * sin(ω * t);
+    end;
 end;    
 
 
 #Generate velocity trajectory from Monte-Carlo initial conditions
-function V(t, ri, vi, ω)
-    return vi * cos.(ω .* t) - ri * ω * sin.(ω .* t);
+function V(t, ri, vi, ω; free=false)
+    if free
+        return vi;
+    else
+        return vi * cos(ω * t) - ri * ω * sin(ω * t);
+    end;
 end;       
 
 
