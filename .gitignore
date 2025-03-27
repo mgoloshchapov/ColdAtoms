@@ -17,6 +17,12 @@ deps/src/
 *.DS_Store
 .vscode
 
+
+# Remove some notebooks
+notebooks/BB1.ipynb
+notebooks/DipoleTrap.ipynb
+notebooks/TrapParameters.ipynb
+
 # Remove all data and images
 notebooks/images
 data
