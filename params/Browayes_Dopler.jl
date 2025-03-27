@@ -1,9 +1,9 @@
 m = 86.9091835;       #Rb87 mass in a.u.
 
 #Saffman params for laser phase noise
-h0 = 13.0 * 1e-6;    #MHz^2/MHz
-hg1 = 25.0 * 1e-6;   #MHz^2/MHz
-hg2 = 10.0e3 * 1e-6; #MHz^2/MHz
+h0 = 13.0 * 1e-12;    #MHz^2/MHz
+hg1 = 25.0 * 1e-12;   #MHz^2/MHz
+hg2 = 10.0e3 * 1e-12; #MHz^2/MHz
 fg1 = 130.0 * 1e-3;  #MHz
 fg2 = 234.0 * 1e-3;  #MHz
 σg1 = 18.0 * 1e-3;   #MHz
@@ -21,19 +21,18 @@ blue_laser_phase_amplitudes = ϕ_amplitudes(f, blue_laser_phase_params);
 λr = 0.795;
 λb = 0.475;
 
-wr = 10.0;
-wb = 3.5;
+wr = 20.0;
+wb = 20.0;
 zr = w0_to_z0(wr, λr);
 zb = w0_to_z0(wr, λb);
 
 #Trap is adiabatically lowered to adiabatic_param * U0
 #Temperature scales as adiabatic_param sqrt(adiabatic_param) * T0  
-adiabatic_param = 1.0;
-U0 = 1000.0 * adiabatic_param;
-w0 = 1.1;
+U0 = 1000;
+w0 = 1.07;
 λ0 = 0.852;
 z0 = w0_to_z0(w0, λ0);
-kT = 50.0 * sqrt(adiabatic_param);
+kT = 30.0;
 
 atom_params = [m, kT];
 trap_params = [U0, w0, z0];
@@ -41,7 +40,5 @@ trap_params = [U0, w0, z0];
 
 #Rabi frequencies
 Δ0 = 2.0*π * 904.0;
-Ωb = 2π * 60.0;
-blue_laser_params = [Ωb, wb, zb];
-Γ = 2.0*π * 6.0;
+Γ = 2.0*π * 6.0 * 1e-6;
 decay_params = [Γ/4, 3*Γ/4];

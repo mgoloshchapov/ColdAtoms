@@ -67,34 +67,52 @@ freq:         make step equal to freq between samples to reduce correlation betw
 skip:         skip first samples, so Markov Chain can converge to desired distribution
 harmonic:     make harmonic approximation, false by default
 """
-function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=false)
+function samples_generate(trap_params, atom_params, N; freq=10, skip=1000, harmonic=true)
     U0, w0, z0 = trap_params;
     m, T = atom_params;
 
-    mean = zeros(6);
-    vstep = vconst*sqrt(T/m);
-    rstep = sqrt(T/U0)/2;
-    cov = Diagonal(([w0*rstep, w0*rstep, z0*sqrt(2)*rstep, vstep, vstep, vstep]) .^ 2);
-    d = MvNormal(mean, cov);
-    
-    samples = [[0.0, 0.0, 0.0, vstep/sqrt(3), vstep/sqrt(3), vstep/sqrt(3)]];
-    u_acc = rand(Uniform(0.0, 1.0), N*freq + skip);
-    acc_rate = 0;
-    
-    for i ∈ 1:N*freq + skip - 1
-        cord_last = samples[end];
-        cord_new = cord_last + rand(d);
-        p_acc = prob_boltzmann(cord_new, trap_params, atom_params; harmonic)/prob_boltzmann(cord_last, trap_params, atom_params; harmonic);
+    if harmonic
+        mean = zeros(6);
+        cov = Diagonal(([T*w0^2/(4.0*U0),T*w0^2/(4.0*U0),T*z0^2/(2.0*U0),vconst^2*T/m,vconst^2*T/m,vconst^2*T/m]));
+        d = MvNormal(mean, cov);
         
-        if p_acc > u_acc[i] && H(cord_new, trap_params, m; harmonic) < U0
-            push!(samples, cord_new);
-            acc_rate += 1; 
-        else
-            push!(samples, cord_last);
+        samples = [];
+        while length(samples) < N
+            cord = rand(d)
+            if H(cord, trap_params, m) < U0
+                push!(samples, cord)
+            end
+        end
+        # func(cord) = H(cord, trap_params, m);
+        # samples = samples[func.(samples) .< U0];
+
+        # Дописать сэмплирование в случае гармонического потенциала. 
+        # Случай T ~ U0 рассматривать не интересно, так как у нас при нём ниче не работает
+        return samples, 1
+    else
+        mean = zeros(6);
+        vstep = vconst*sqrt(T/m);
+        rstep = sqrt(T/U0)/2;
+        cov = Diagonal(([w0*rstep, w0*rstep, z0*sqrt(2)*rstep, vstep, vstep, vstep]) .^ 2);
+        d = MvNormal(mean, cov);
+        samples = [[0.0, 0.0, 0.0, vstep/sqrt(3), vstep/sqrt(3), vstep/sqrt(3)]];
+        u_acc = rand(Uniform(0.0, 1.0), N*freq + skip);
+        acc_rate = 0;
+        for i ∈ 1:N*freq + skip - 1
+            cord_last = samples[end];
+            cord_new = cord_last + rand(d);
+            p_acc = prob_boltzmann(cord_new, trap_params, atom_params; harmonic)/prob_boltzmann(cord_last, trap_params, atom_params; harmonic);
+            
+            if p_acc > u_acc[i] && H(cord_new, trap_params, m; harmonic) < U0
+                push!(samples, cord_new);
+                acc_rate += 1; 
+            else
+                push!(samples, cord_last);
+            end;
         end;
+
+        return samples[1+skip:freq:end], acc_rate/(N*freq + skip)
     end;
-        
-    return samples[1+skip:freq:end], acc_rate/(N*freq + skip)
 end;
 
 

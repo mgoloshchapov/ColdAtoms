@@ -11,9 +11,9 @@ using SplitApplyCombine
 using Interpolations
 
 export 
-    w0_to_z0, trap_frequencies,
+    w0_to_z0, trap_frequencies, E, I,
     release_recapture,
-    samples_generate, samples_visualise, R, V, get_trap_params,
+    samples_generate, samples_visualise, R, V, get_trap_params, H,
     Sϕ, ϕ_amplitudes, ϕ,
     simulation, Ω_twophoton, T_twophoton, δ_twophoton, Ωr_required, 
     g, p, r, gt
@@ -24,6 +24,6 @@ include("basic_experiments.jl")
 include("lasernoise_sampler.jl")
 include("atom_sampler.jl")
 include("rydberg_model.jl")
-include("plot_rus.jl")
+include("plot_utils.jl")
 
 end

@@ -47,7 +47,8 @@ function δ(vz, red_laser_params, blue_laser_params; parallel=false)
     kb = 2 * zb0/wb0^2;
 
     if parallel
-        return (kr + kb) * vz
+        # return (kr + kb) * vz
+        return sqrt(kr^2 + kb^2) * vz
     else
         return (kr - kb) * vz
     end;
@@ -179,12 +180,12 @@ function simulation(
         #Hamiltonian params trajectories
         Ht = TimeDependentSum(
         [
-            t -> -Δ(Vz(t), red_laser_params) - Δ0;
-            t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
-            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
-            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
-            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
+            t -> -Δ(Vz(t), red_laser_params) - Δ0,
+            t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0,
+            t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0,
+            t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0),
+            t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0,
+            t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0)
         ],
         operators
         );
@@ -224,122 +225,6 @@ end;
 
 function Ωr_required(Ω, Ωb, Δ)
     return 2.0 * Δ * Ω / Ωb
-end;
-
-
-
-function simulation_parallel(
-    tspan, ψ0, 
-        
-    atom_params,
-    trap_params,
-    samples,
-    
-    f,
-    red_laser_phase_amplitudes,
-    blue_laser_phase_amplitudes,
-    
-    red_laser_params,
-    blue_laser_params,
-    
-    detuning_params,
-    decay_params;
-
-    atom_motion=true,
-    free_motion=true,
-    laser_noise=true,
-    spontaneous_decay=true,
-    parallel=false
-    )
-
-    N = length(samples);
-
-    ωr, ωz = trap_frequencies(atom_params, trap_params);
-    Δ0, δ0 = detuning_params;
-
-    if spontaneous_decay
-        decay_params_temp = decay_params;
-    else
-        decay_params_temp = [0.0, 0.0];
-    end;
-
-    J, Jdagger = JumpOperators(decay_params_temp);
-
-    ρ0 = ψ0 ⊗ dagger(ψ0);
-
-
-    #Density matrix averaged over realizations of laser noise and atom dynamics.
-    ρ_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-
-    #Second moment for error estimation of level populations. 
-    #Not sure if I can use it for error estimation of arbitrary operators.
-    ρ2_mean = [zero(ψ0 ⊗ dagger(ψ0)) for _ ∈ 1:length(tspan)];
-
-    #Hamiltonian
-    H = LazySum(
-        zeros(ComplexF64, 6),
-        [np, nr, σgp, σpg, σpr, σrp]
-        );
-
-    for i ∈ 1:N
-        if atom_motion
-            #Atom initial conditions
-            xi, yi, zi, vxi, vyi, vzi = samples[i];
-        else
-            xi, yi, zi, vxi, vyi, vzi = zeros(6);
-        end;
-        
-        #Atom trajectories
-        X = t -> R(t, xi, vxi, ωr; free=free_motion);
-        Y = t -> R(t, yi, vyi, ωr; free=free_motion);
-        Z = t -> R(t, zi, vzi, ωz; free=free_motion);
-        Vz = t -> V(t, zi, vzi, ωz; free=free_motion);
-
-        
-        if laser_noise
-            red_laser_phase_amplitudes_temp = red_laser_phase_amplitudes;
-            blue_laser_phase_amplitudes_temp = blue_laser_phase_amplitudes;
-        else
-            red_laser_phase_amplitudes_temp = zero(red_laser_phase_amplitudes);
-            blue_laser_phase_amplitudes_temp = zero(blue_laser_phase_amplitudes);
-        end;
-
-        #Generate phase noise traces for red and blue lasers
-        tspan_noise = [0.0:tspan[end]/1000:tspan[end];];
-        ϕ_red_res = ϕ(tspan_noise, f, red_laser_phase_amplitudes_temp);
-        ϕ_blue_res = ϕ(tspan_noise, f, blue_laser_phase_amplitudes_temp);
-
-        #Interpolate phase noise traces to pass to hamiltonian
-        nodes = (tspan_noise, );
-        ϕ_red = interpolate(nodes, ϕ_red_res, Gridded(Linear()));
-        ϕ_blue = interpolate(nodes, ϕ_blue_res, Gridded(Linear()));
-        
-        #Hamiltonian params trajectories
-        # Δ_temp = t -> -Δ(Vz(t), red_laser_params) - Δ0;
-        # δ_temp = t -> -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
-        # Ωr_temp = t -> exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
-        # Ωr_conj_temp = t -> conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
-        # Ωb_temp = t -> exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-        # Ωb_conj_temp = t -> conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0);
-        
-
-        function super_operator(t, rho)
-            H.factors[1] = -Δ(Vz(t), red_laser_params) - Δ0;
-            H.factors[2] = -δ(Vz(t), red_laser_params, blue_laser_params; parallel=parallel) - δ0;
-            H.factors[3] = exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0;
-            H.factors[4] = conj(exp(1.0im * ϕ_red(t)) * Ω(X(t), Y(t), Z(t), red_laser_params) / 2.0);
-            H.factors[5] = exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0;
-            H.factors[6] = conj(exp(1.0im * ϕ_blue(t)) * Ω(X(t), Y(t), Z(t), blue_laser_params) / 2.0)
-            return H, J, Jdagger
-        end;
-    
-        tout, ρ = timeevolution.master_dynamic(tspan, ρ0, super_operator);
-
-        ρ_mean = ρ_mean + ρ;
-        ρ2_mean = ρ2_mean + ρ .^ 2;
-    end;
-
-    return ρ_mean/N, ρ2_mean/N
 end;
 
 

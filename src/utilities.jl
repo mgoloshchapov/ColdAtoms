@@ -6,8 +6,8 @@ end;
 
 
 #Converter
-function w0_to_z0(w0, λ)
-    return π*w0^2/λ;
+function w0_to_z0(w0, λ, M2=1.0)
+    return π*w0^2/λ / M2;
 end;
 
 
@@ -17,6 +17,11 @@ function A(x, y, z, w0, z0)
     return (w0 ./ w(z, w0, z0)) .* exp.(- (x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2))
 end;
 
+
+#Intensity of gaussian beam with |E0|=1
+function I(x, y, z, w0, z0)
+    return ((w0 ./ w(z, w0, z0)) .* exp.(- (x .^2 .+ y .^2) ./ (w(z, w0, z0) .^2))) .^2
+end;
 
 
 #Phase of gaussian beam

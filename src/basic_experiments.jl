@@ -10,7 +10,7 @@ function is_zero(x)
 end;
 
 
-function release_evolve(tspan, cord, atom_params, trap_params)
+function release_evolve(tspan, cord, atom_params, trap_params; eps=1e-3)
     xi, yi, zi, vxi, vyi, vzi = cord;
     m, T = atom_params;
     U0, w0, z0 = trap_params;
@@ -21,11 +21,12 @@ function release_evolve(tspan, cord, atom_params, trap_params)
     
     kinetic = K(cord, trap_params, m);
     potential = U0 .* (1.0 .- A(x, y, z, w0, z0) .^2);
-    recap = (kinetic .+ potential) .< U0;
+    recap = (kinetic .+ potential) .< U0 * (1.0-eps);
     
     idx = findfirst(is_zero, recap);
     
-    if idx != nothing
+    #Changed != nothing to !isnothing
+    if !isnothing(idx)
         recap[idx:end] .= 0;
     end;
     
@@ -33,12 +34,12 @@ function release_evolve(tspan, cord, atom_params, trap_params)
 end; 
 
 
-function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000)
-    samples, acc_rate = samples_generate(trap_params, atom_params, N; freq=freq, skip=skip);
+function release_recapture(tspan, trap_params, atom_params, N; freq=10, skip=1000, eps=1e-3, harmonic=true)
+    samples, acc_rate = samples_generate(trap_params, atom_params, N; freq=freq, skip=skip, harmonic=harmonic);
     recapture = zeros(length(tspan));
     
     for i ∈ 1:N
-        recapture += release_evolve(tspan, samples[i], atom_params, trap_params);
+        recapture += release_evolve(tspan, samples[i], atom_params, trap_params; eps=eps);
     end;
     
     return recapture ./ N, acc_rate
