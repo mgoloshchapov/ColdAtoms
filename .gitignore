@@ -14,7 +14,7 @@ deps/usr/
 deps/src/
 
 # System files
-.DS_Store
+*.DS_Store
 .vscode
 
 # Remove all data and images
